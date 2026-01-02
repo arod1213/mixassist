@@ -1,29 +1,11 @@
 const std = @import("std");
 const print = std.debug.print;
 const c = @import("miniaudio").lib;
-const AudioError = @import("./errors/main.zig").AudioError;
+const AudioError = @import("./errors.zig").AudioError;
 const types = @import("./types.zig");
-const analysis = @import("./analysis/main.zig");
+const analysis = @import("./analysis.zig");
 
-pub const Direction = enum { fwd, bck };
-
-pub const PlayState = struct {
-    normalize: bool = true,
-    deck: usize = 0,
-    is_playing: bool = true,
-    position: f32 = 0.0,
-    marker: ?usize = null,
-    direction: ?Direction = null,
-    output: PanMode = .stereo,
-    target_lufs: f32,
-
-    pub fn init(target_lufs: f32) @This() {
-        return .{ .target_lufs = target_lufs };
-    }
-};
-
-pub const PanMode = enum { left, right, stereo };
-pub const Command = union(enum) { play: bool, reset, marker: u8, move: Direction, deck: usize, panMode: PanMode, normalize: bool };
+pub const Command = union(enum) { play: bool, reset, marker: u8, move: types.Direction, deck: usize, panMode: types.PanMode, normalize: bool };
 
 pub const CommandQueue = struct {
     cmd: ?Command,
@@ -52,7 +34,7 @@ pub const CommandQueue = struct {
     }
 };
 
-pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *PlayState) !void {
+pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *types.PlayState) !void {
     while (true) {
         if (cmd.take()) |t| {
             switch (t) {

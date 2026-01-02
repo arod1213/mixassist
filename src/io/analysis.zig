@@ -2,8 +2,8 @@ const std = @import("std");
 const print = std.debug.print;
 const c = @import("miniaudio").lib;
 const expect = std.testing.expect;
-const AudioError = @import("../errors/main.zig").AudioError;
-const Sound = @import("../types.zig").Sound;
+const AudioError = @import("./errors.zig").AudioError;
+const Sound = @import("./types.zig").Sound;
 
 pub fn markerPos(num: usize, sound: *const Sound) f32 {
     var length: f32 = undefined;
@@ -16,18 +16,17 @@ pub fn markerPos(num: usize, sound: *const Sound) f32 {
     const f_pos: f32 = @floatFromInt(num);
 
     // const x = sound.tempo / 60.0 * 4 * f_pos;
-
     const x = length / 10.0 * f_pos;
     return x;
 }
 
 pub fn nextBar(pos: f32, tempo: f32) f32 {
-    const spm = 4.0 * tempo / 60.0; // adjust for alt signatures
+    const spm = 4.0 * 60.0 / tempo; // adjust for alt signatures
     if (pos == 0) {
         return spm;
     }
 
-    return @ceil(pos / spm) * spm;
+    return (@floor(pos / spm) + 1.0) * spm;
 }
 
 test "next bar" {
@@ -37,30 +36,18 @@ test "next bar" {
 }
 
 pub fn prevBar(pos: f32, tempo: f32) f32 {
-    const spm: f32 = 4.0 * tempo / 60.0; // adjust for alt signatures
-    if (pos == 0) {
-        return 0;
-    }
+    const spb = 4.0 * 60.0 / tempo;
+    const epsilon = 0.2 * spb;
 
-    const div: f32 = @floor(pos / spm); // bars ahead
+    if (pos <= 0.0) return 0.0;
 
-    const div_int: i32 = @intFromFloat(div);
-    const div_float: f32 = @floatFromInt(div_int);
+    const bar_index = @floor(pos / spb);
 
-    const rem: f32 = div - div_float;
+    const target_bar =
+        if (pos - bar_index * spb < epsilon)
+            bar_index - 1.0
+        else
+            bar_index;
 
-    const prev: f32 = @as(f32, @floatFromInt(div_int - 1)) * spm;
-    if (prev < 0.0) {
-        return 0.0;
-    }
-
-    if (rem < 0.1) {
-        const x: f32 = prev - spm;
-        if (x < 0.0) {
-            return 0.0;
-        }
-        return x;
-    }
-
-    return prev;
+    return @max(0.0, target_bar * spb);
 }

@@ -1,11 +1,11 @@
 const std = @import("std");
 const print = std.debug.print;
 const c = @import("miniaudio").lib;
-const AudioError = @import("../errors/main.zig").AudioError;
-const analysis = @import("../analysis/main.zig");
-const types = @import("../types.zig");
-const cmd = @import("../commands.zig");
-pub const PlayState = cmd.PlayState;
+const AudioError = @import("./errors.zig").AudioError;
+const analysis = @import("./analysis.zig");
+const types = @import("./types.zig");
+const cmd = @import("./commands.zig");
+pub const PlayState = types.PlayState;
 
 pub fn play(group: [*c]c.ma_sound_group, sounds: []const *types.Sound, state: *PlayState) void {
     _ = c.ma_sound_group_start(group);

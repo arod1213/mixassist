@@ -2,9 +2,27 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const print = std.debug.print;
 
-pub const AudioError = @import("./errors/main.zig").AudioError;
+pub const AudioError = @import("./errors.zig").AudioError;
 const c = @import("miniaudio").lib;
 const loudness = @import("./loudness.zig");
+
+pub const Direction = enum { fwd, bck };
+pub const PanMode = enum { left, right, stereo };
+
+pub const PlayState = struct {
+    normalize: bool = true,
+    deck: usize = 0,
+    is_playing: bool = true,
+    position: f32 = 0.0,
+    marker: ?usize = null,
+    direction: ?Direction = null,
+    output: PanMode = .stereo,
+    target_lufs: f32,
+
+    pub fn init(target_lufs: f32) @This() {
+        return .{ .target_lufs = target_lufs };
+    }
+};
 
 pub const EngineState = struct {
     engine: *c.ma_engine,
