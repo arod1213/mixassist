@@ -1,5 +1,4 @@
 CONVERGE OUTPUT TO MONO (ensure db compensation - -6db?)
-DETECT TEMPO ON AUDIO LOAD
 SET SENSIBLE MARKERS BASED ON TEMPO
 ENSURE PROPER START OFFSET (skip silence + mark first downbeat)
 
