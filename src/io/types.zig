@@ -4,6 +4,7 @@ const print = std.debug.print;
 
 pub const AudioError = @import("./errors.zig").AudioError;
 const c = @import("miniaudio").lib;
+const aubio = @import("aubio");
 const loudness = @import("./loudness.zig");
 
 pub const Direction = enum { fwd, bck };
@@ -99,11 +100,14 @@ pub const Sound = struct {
         }
 
         const lufs: ?f64 = loudness.getLufs(ptr, engine.*) catch null;
+        // MAYBE CHANGE for more precision
+        const tempo: f32 = @round(aubio.getBpm(filepath, engine.*.sampleRate) catch 0);
+
         return .{
             .lufs = lufs,
             .ma_sound = ptr,
             .offset = offset,
-            .tempo = 102,
+            .tempo = tempo,
         };
     }
 

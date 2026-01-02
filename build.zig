@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 // fn addCModule(b: *std.Build, name: []const u8, path: []const u8) *std.Build.Module {
 //     const mod = b.addModule(name, .{
@@ -33,6 +34,15 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .link_libc = true,
     });
+
+    if (builtin.target.os.tag == .macos) {
+        aubio.linkFramework("CoreFoundation", .{ .needed = true });
+        aubio.linkFramework("CoreAudio", .{ .needed = true });
+        aubio.linkFramework("AudioToolbox", .{ .needed = true });
+        aubio.linkFramework("Accelerate", .{ .needed = true });
+    }
+
+    aubio.linkSystemLibrary("sndfile", .{ .preferred_link_mode = .dynamic });
     aubio.linkSystemLibrary("aubio", .{ .preferred_link_mode = .static });
 
     const ebur = b.addModule("ebur", .{
