@@ -29,9 +29,7 @@ fn pollTimestamp(w: *std.Io.Writer, state: *const PlayState) void {
     }
 }
 
-fn handleInput(r: *std.Io.Reader, queue: *CommandQueue, state: *PlayState) !void {
-    const b = try r.takeByte();
-
+fn handleInput(b: u8, queue: *CommandQueue, state: *PlayState) !void {
     switch (b) {
         'q' => return,
 
@@ -72,18 +70,21 @@ pub fn main() !void {
         try writer.print("not enough arguments\nplease provide paths to audio files\n", .{});
         return;
     }
-
     const paths = args[1..];
 
     var state = PlayState.init(-13.0);
-    var cmd = CommandQueue.init();
-    const handle = try std.Thread.spawn(.{}, worker, .{ paths, &state, &cmd });
+    var queue = CommandQueue.init();
+
+    // create and run engine
+    const handle = try std.Thread.spawn(.{}, worker, .{ paths, &state, &queue });
     defer handle.join();
 
-    _ = try std.Thread.spawn(.{}, pollTimestamp, .{ writer, &state }); // print timestamp
+    // print timestamp
+    _ = try std.Thread.spawn(.{}, pollTimestamp, .{ writer, &state });
 
     while (true) {
-        handleInput(&reader, &cmd, &state) catch |e| {
+        const b = try reader.takeByte();
+        handleInput(b, &queue, &state) catch |e| {
             try writer.print("failed because {any}\n", .{e});
             break;
         };
