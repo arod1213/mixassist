@@ -1,5 +1,18 @@
 const std = @import("std");
 
+// fn addCModule(b: *std.Build, name: []const u8, path: []const u8) *std.Build.Module {
+//     const mod = b.addModule(name, .{
+//         .root_source_file = b.path("src/miniaudio.zig"),
+//         .target = target,
+//         .link_libc = true,
+//     });
+//     mini.addIncludePath(b.path("include"));
+//     mini.addCSourceFile(.{
+//         .file = b.path("include/miniaudio.c"),
+//         .flags = &.{},
+//     });
+// }
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -9,23 +22,25 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .link_libc = true,
     });
-    mini.addIncludePath(b.path("."));
+    mini.addIncludePath(b.path("./include"));
     mini.addCSourceFile(.{
-        .file = b.path("miniaudio.c"),
+        .file = b.path("include/miniaudio.c"),
         .flags = &.{},
     });
+
+    const aubio = b.addModule("aubio", .{
+        .root_source_file = b.path("src/aubio.zig"),
+        .target = target,
+        .link_libc = true,
+    });
+    aubio.linkSystemLibrary("aubio", .{ .preferred_link_mode = .static });
 
     const ebur = b.addModule("ebur", .{
         .root_source_file = b.path("src/ebur128.zig"),
         .target = target,
         .link_libc = true,
     });
-    ebur.addIncludePath(b.path("."));
-    ebur.addCSourceFile(.{
-        .file = b.path("ebur128.c"),
-        .flags = &.{},
-    });
-    ebur.linkSystemLibrary("libebur128", .{ .preferred_link_mode = .static });
+    ebur.linkSystemLibrary("ebur128", .{ .preferred_link_mode = .static });
 
     const mod = b.addModule("audio", .{
         .root_source_file = b.path("src/io/root.zig"),
@@ -33,6 +48,7 @@ pub fn build(b: *std.Build) void {
         .imports = &.{
             .{ .name = "miniaudio", .module = mini },
             .{ .name = "ebur128", .module = ebur },
+            .{ .name = "aubio", .module = aubio },
         },
     });
 
