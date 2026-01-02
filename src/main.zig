@@ -4,8 +4,10 @@ const print = std.debug.print;
 
 const audio = @import("audio");
 const playback = audio.playback;
+const PlayState = playback.PlayState;
+const CommandQueue = audio.CommandQueue;
 
-fn worker(paths: []const [*:0]const u8, state: *playback.PlayState, cmd: *audio.CommandQueue) void {
+fn worker(paths: []const [*:0]const u8, state: *PlayState, cmd: *CommandQueue) void {
     playback.multiPlayback(paths, state, cmd) catch return;
 }
 
@@ -16,7 +18,7 @@ fn setupTermios(handle: posix.fd_t) !void {
     _ = try posix.tcsetattr(handle, posix.TCSA.NOW, settings);
 }
 
-fn pollTimestamp(w: *std.Io.Writer, state: *const playback.PlayState) void {
+fn pollTimestamp(w: *std.Io.Writer, state: *const PlayState) void {
     while (true) {
         const int_sec: u32 = @intFromFloat(state.position);
         const min: u32 = int_sec / 60;
@@ -27,12 +29,36 @@ fn pollTimestamp(w: *std.Io.Writer, state: *const playback.PlayState) void {
     }
 }
 
-pub fn main() !void {
-    var buf: [20]u8 = undefined;
-    var stdin = std.fs.File.stdin();
+fn handleInput(r: *std.Io.Reader, queue: *CommandQueue, state: *PlayState) !void {
+    const b = try r.takeByte();
 
+    switch (b) {
+        'q' => return,
+
+        // playback
+        'p' => queue.set(.{ .play = !state.is_playing }),
+        's' => queue.set(.{ .deck = state.deck + 1 }),
+        'n' => queue.set(.{ .normalize = !state.normalize }),
+
+        // pan
+        'l' => queue.set(.{ .panMode = .left }),
+        'r' => queue.set(.{ .panMode = .right }),
+        'c' => queue.set(.{ .panMode = .stereo }),
+
+        // position
+        'w' => queue.set(.{ .move = .fwd }),
+        'b' => queue.set(.{ .move = .bck }),
+        '0' => queue.set(.{ .reset = {} }),
+        '1'...'9' => |m| queue.set(.{ .marker = try std.fmt.charToDigit(m, 10) }),
+        else => {},
+    }
+}
+
+pub fn main() !void {
+    var stdin = std.fs.File.stdin();
     try setupTermios(stdin.handle);
 
+    var buf: [20]u8 = undefined;
     var stdin_reader = stdin.reader(&buf);
     var reader = &stdin_reader.interface;
 
@@ -49,37 +75,17 @@ pub fn main() !void {
 
     const paths = args[1..];
 
-    var state = playback.PlayState.init(-13.0);
-    var cmd = audio.CommandQueue.init();
+    var state = PlayState.init(-13.0);
+    var cmd = CommandQueue.init();
     const handle = try std.Thread.spawn(.{}, worker, .{ paths, &state, &cmd });
     defer handle.join();
 
     _ = try std.Thread.spawn(.{}, pollTimestamp, .{ writer, &state }); // print timestamp
+
     while (true) {
-        const b = reader.takeByte() catch |e| {
-            try writer.print("failed because: {any}\n", .{e});
-            return;
+        handleInput(&reader, &cmd, &state) catch |e| {
+            try writer.print("failed because {any}\n", .{e});
+            break;
         };
-
-        switch (b) {
-            'q' => break,
-
-            // playback
-            'p' => cmd.set(.{ .play = !state.is_playing }),
-            's' => cmd.set(.{ .deck = state.deck + 1 }),
-            'n' => cmd.set(.{ .normalize = !state.normalize }),
-
-            // pan
-            'l' => cmd.set(.{ .panMode = .left }),
-            'r' => cmd.set(.{ .panMode = .right }),
-            'c' => cmd.set(.{ .panMode = .stereo }),
-
-            // position
-            'w' => cmd.set(.{ .move = .fwd }),
-            'b' => cmd.set(.{ .move = .bck }),
-            '0' => cmd.set(.{ .reset = {} }),
-            '1'...'9' => |m| cmd.set(.{ .marker = try std.fmt.charToDigit(m, 10) }),
-            else => {},
-        }
     }
 }
