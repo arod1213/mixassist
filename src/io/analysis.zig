@@ -51,3 +51,9 @@ pub fn prevBar(pos: f32, tempo: f32) f32 {
 
     return @max(0.0, target_bar * spb);
 }
+
+test "prev bar" {
+    try expect(2.0 == prevBar(3.2, 120.0));
+    try expect(2.0 == prevBar(3.9, 120.0));
+    try expect(0.0 == prevBar(2.0, 120.0));
+}

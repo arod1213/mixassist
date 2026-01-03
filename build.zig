@@ -1,19 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-// fn addCModule(b: *std.Build, name: []const u8, path: []const u8) *std.Build.Module {
-//     const mod = b.addModule(name, .{
-//         .root_source_file = b.path("src/miniaudio.zig"),
-//         .target = target,
-//         .link_libc = true,
-//     });
-//     mini.addIncludePath(b.path("include"));
-//     mini.addCSourceFile(.{
-//         .file = b.path("include/miniaudio.c"),
-//         .flags = &.{},
-//     });
-// }
-
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -90,7 +77,6 @@ pub fn build(b: *std.Build) void {
     const mod_tests = b.addTest(.{
         .root_module = mod,
     });
-
     const run_mod_tests = b.addRunArtifact(mod_tests);
 
     const exe_tests = b.addTest(.{

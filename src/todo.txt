@@ -3,3 +3,11 @@ SET SENSIBLE MARKERS BASED ON TEMPO
 ENSURE PROPER START OFFSET (skip silence + mark first downbeat)
 
 SETUP EXPOSED C ABI FUNCTIONS TO EXPORT FOR SWIFT UI
+
+DOWNBEAT should be based on time differential to get to nearest downbeat from file start
+
+WRITE TESTS FOR NEXT MARKER AND PREV MARKER
+-- ensure start offset / downbeat position is accounted for
+-- markers should on be nearest bars (multiples of 2 maybe)
+
+ALLOW ADJUSTABLE TOLERANCE FOR EPSILON (next bar / prev bar)
