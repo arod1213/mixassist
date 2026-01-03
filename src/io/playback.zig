@@ -14,11 +14,7 @@ pub fn play(group: [*c]c.ma_sound_group, sounds: []const *types.Sound, state: *P
             state.position = 0;
             return play(group, sounds, state);
         }
-        if (state.position == 0) {
-            sound.playStart();
-        } else {
-            sound.playAt(state.position);
-        }
+        sound.play(state.position);
     }
 }
 

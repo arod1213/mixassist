@@ -90,13 +90,9 @@ pub const Sound = struct {
         c.ma_sound_uninit(self.ma_sound);
     }
 
-    pub fn playAt(self: Self, pos: f32) void {
-        _ = c.ma_sound_seek_to_second(self.ma_sound, pos);
-        _ = c.ma_sound_start(self.ma_sound);
-    }
-
-    pub fn playStart(self: *Self) void {
-        _ = c.ma_sound_seek_to_second(self.ma_sound, self.offset_seconds);
+    pub fn play(self: Self, pos: f32) void {
+        const x = pos + self.offset_seconds;
+        _ = c.ma_sound_seek_to_second(self.ma_sound, x);
         _ = c.ma_sound_start(self.ma_sound);
     }
 
