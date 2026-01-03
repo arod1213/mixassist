@@ -14,7 +14,11 @@ pub fn play(group: [*c]c.ma_sound_group, sounds: []const *types.Sound, state: *P
             state.position = 0;
             return play(group, sounds, state);
         }
-        sound.play(state.position);
+        if (state.position == 0) {
+            sound.playStart();
+        } else {
+            sound.playAt(state.position);
+        }
     }
 }
 
@@ -30,7 +34,7 @@ fn openSounds(alloc: std.mem.Allocator, paths: []const [*:0]const u8, engine: [*
     defer sound_list.deinit(alloc);
     for (paths) |path| {
         const s = try alloc.create(types.Sound);
-        s.* = try types.Sound.init(alloc, engine, group, std.mem.span(path), 0.0);
+        s.* = try types.Sound.init(alloc, engine, group, std.mem.span(path));
         try sound_list.append(alloc, s);
     }
     return try sound_list.toOwnedSlice(alloc);

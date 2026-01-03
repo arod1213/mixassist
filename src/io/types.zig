@@ -62,11 +62,43 @@ pub fn setupGroup(alloc: Allocator, engine: [*c]c.ma_engine) !*c.ma_sound_group 
 
 pub const Sound = struct {
     ma_sound: *c.struct_ma_sound,
-    offset: f32 = 0,
+    offset_seconds: f32,
     tempo: f32,
     lufs: ?f64,
 
     const Self = @This();
+
+    pub fn init(alloc: Allocator, engine: [*c]c.ma_engine, group: [*c]c.ma_sound_group, filepath: []const u8) !Self {
+        const ptr = try alloc.create(c.ma_sound);
+        if (c.ma_sound_init_from_file(engine, @ptrCast(filepath), 0, group, null, ptr) != c.MA_SUCCESS) {
+            return error.FailedToInit;
+        }
+
+        const lufs: ?f64 = loudness.getLufs(ptr, engine.*) catch null;
+        // MAYBE CHANGE for more precision
+        const tempo: f32 = @round(aubio.getBpm(filepath, engine.*.sampleRate) catch 0);
+
+        return .{
+            .lufs = lufs,
+            .ma_sound = ptr,
+            .offset_seconds = 0,
+            .tempo = tempo,
+        };
+    }
+
+    pub fn deinit(self: *Self) void {
+        c.ma_sound_uninit(self.ma_sound);
+    }
+
+    pub fn playAt(self: Self, pos: f32) void {
+        _ = c.ma_sound_seek_to_second(self.ma_sound, pos);
+        _ = c.ma_sound_start(self.ma_sound);
+    }
+
+    pub fn playStart(self: *Self) void {
+        _ = c.ma_sound_seek_to_second(self.ma_sound, self.offset_seconds);
+        _ = c.ma_sound_start(self.ma_sound);
+    }
 
     pub fn targetVol(self: Self, comptime T: type, target: T) T {
         return loudness.ampToTarget(T, self.lufs orelse target, target);
@@ -86,32 +118,5 @@ pub const Sound = struct {
         var length: f32 = 0;
         _ = c.ma_sound_get_length_in_seconds(self.ma_sound, &length);
         return pos >= length and pos > 0.0;
-    }
-
-    pub fn play(self: Self, pos: f32) void {
-        _ = c.ma_sound_seek_to_second(self.ma_sound, pos);
-        _ = c.ma_sound_start(self.ma_sound);
-    }
-
-    pub fn init(alloc: Allocator, engine: [*c]c.ma_engine, group: [*c]c.ma_sound_group, filepath: []const u8, offset: f32) !Self {
-        const ptr = try alloc.create(c.ma_sound);
-        if (c.ma_sound_init_from_file(engine, @ptrCast(filepath), 0, group, null, ptr) != c.MA_SUCCESS) {
-            return error.FailedToInit;
-        }
-
-        const lufs: ?f64 = loudness.getLufs(ptr, engine.*) catch null;
-        // MAYBE CHANGE for more precision
-        const tempo: f32 = @round(aubio.getBpm(filepath, engine.*.sampleRate) catch 0);
-
-        return .{
-            .lufs = lufs,
-            .ma_sound = ptr,
-            .offset = offset,
-            .tempo = tempo,
-        };
-    }
-
-    pub fn deinit(self: *Self) void {
-        c.ma_sound_uninit(self.ma_sound);
     }
 };

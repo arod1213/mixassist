@@ -71,7 +71,7 @@ pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *ty
                 .play => |x| state.is_playing = x,
                 .reset => {
                     for (engine.sounds) |sound| {
-                        _ = c.ma_sound_seek_to_second(sound.ma_sound, 0.0);
+                        sound.playStart();
                     }
                     state.position = 0.0;
                 },
