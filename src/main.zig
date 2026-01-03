@@ -34,7 +34,7 @@ fn handleInput(b: u8, queue: *CommandQueue, state: *PlayState) !void {
         'q' => return,
 
         // playback
-        'p' => queue.set(.{ .play = !state.is_playing }),
+        'p' => queue.set(.{ .play = !state.playing }),
         's' => queue.set(.{ .deck = state.deck + 1 }),
         'n' => queue.set(.{ .normalize = !state.normalize }),
 

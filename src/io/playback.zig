@@ -21,7 +21,7 @@ pub fn play(group: [*c]c.ma_sound_group, sounds: []const *types.Sound, state: *P
 pub fn pause(group: [*c]c.ma_sound_group, sounds: []const *types.Sound) void {
     _ = c.ma_sound_group_stop(group);
     for (sounds) |sound| {
-        _ = c.ma_sound_stop(sound.ma_sound);
+        _ = c.ma_sound_stop(sound.ptr);
     }
 }
 
@@ -58,7 +58,7 @@ pub fn multiPlayback(paths: []const [*:0]const u8, state: *PlayState, cmd_queue:
 
     var was_playing = false; // init to false to setup first playback
     while (true) {
-        switch (state.is_playing) {
+        switch (state.playing) {
             true => {
                 if (!was_playing) {
                     play(group, sounds, state);
@@ -66,11 +66,11 @@ pub fn multiPlayback(paths: []const [*:0]const u8, state: *PlayState, cmd_queue:
                 }
 
                 var cur_pos: f32 = undefined;
-                _ = c.ma_sound_get_cursor_in_seconds(sounds[0].ma_sound, &cur_pos);
+                _ = c.ma_sound_get_cursor_in_seconds(sounds[0].ptr, &cur_pos);
                 state.position = cur_pos;
 
                 if (types.Sound.shouldReset(sounds[state.deck].*, cur_pos)) {
-                    state.is_playing = false;
+                    state.playing = false;
                     pause(group, sounds);
                     continue;
                 }

@@ -7,7 +7,7 @@ const Sound = @import("./types.zig").Sound;
 
 pub fn markerPos(num: usize, sound: *const Sound) f32 {
     var length: f32 = undefined;
-    if (c.ma_sound_get_length_in_seconds(sound.ma_sound, &length) != 0) {
+    if (c.ma_sound_get_length_in_seconds(sound.ptr, &length) != 0) {
         length = 0.0;
     }
     if (num == 0) {

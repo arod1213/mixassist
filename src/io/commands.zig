@@ -62,13 +62,13 @@ pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *ty
                     for (engine.sounds, 0..) |sound, idx| {
                         if (idx == deck_num) {
                             const amp: f32 = if (state.normalize) @floatCast(sound.targetVol(f64, state.target_lufs)) else 1.0;
-                            c.ma_sound_set_volume(sound.ma_sound, amp);
+                            c.ma_sound_set_volume(sound.ptr, amp);
                         } else {
-                            c.ma_sound_set_volume(sound.ma_sound, 0);
+                            c.ma_sound_set_volume(sound.ptr, 0);
                         }
                     }
                 },
-                .play => |x| state.is_playing = x,
+                .play => |x| state.playing = x,
                 .reset => {
                     for (engine.sounds) |sound| {
                         sound.play(0.0);
@@ -76,9 +76,11 @@ pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *ty
                     state.position = 0.0;
                 },
                 .marker => |x| {
+                    const active_sound = engine.sounds[state.deck];
+                    const pos = analysis.markerPos(x, active_sound);
+
                     for (engine.sounds) |sound| {
-                        const pos = analysis.markerPos(x, sound);
-                        _ = c.ma_sound_seek_to_second(sound.ma_sound, pos);
+                        _ = c.ma_sound_seek_to_second(sound.ptr, pos);
                     }
                 },
                 .move => |x| {
@@ -87,7 +89,7 @@ pub fn handleCommands(cmd: *CommandQueue, engine: *types.EngineState, state: *ty
                             .fwd => analysis.nextBar(state.position, sound.tempo),
                             .bck => analysis.prevBar(state.position, sound.tempo),
                         };
-                        _ = c.ma_sound_seek_to_second(sound.ma_sound, pos);
+                        _ = c.ma_sound_seek_to_second(sound.ptr, pos);
                     }
                 },
             }
