@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const XCFrameworkStep = @import("./src/build/xcframework.zig").XCFrameworkStep;
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -48,6 +49,7 @@ pub fn build(b: *std.Build) void {
             .{ .name = "aubio", .module = aubio },
         },
     });
+    // const xcframework = try XCFrameworkStep;
 
     const exe = b.addExecutable(.{
         .name = "audio",
